@@ -1,6 +1,6 @@
 VENV_BIN=venv/bin
 
-MODULES=error extract mapper
+MODULES=error extract mapper maxtract
 
 .PHONy: test single-test clean
 

@@ -57,7 +57,7 @@ class Node:
         """Allows for sorting collections of Nodes."""
         return self.url < other.url
 
-    def __init_html(self):
+    def __init_html(self) -> str:
         """Initialize the node's html content.
 
         Raises:
@@ -73,10 +73,10 @@ class Node:
 
         return html
 
-    def __init_children(self):
+    def __init_children(self) -> Set[str]:
         """Initialize the node's child set."""
         return {utils.normalize_link(self.url, a["href"])
-                for a in self._soup.find_all("a")}
+                for a in self._soup.find_all("a", href=True)}
 
     def update(self):
         """Update the Node's html and children from the current values."""

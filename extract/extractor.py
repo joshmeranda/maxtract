@@ -15,9 +15,9 @@ class Extractor:
         targets (list): The list of urls from which to extract data.
         pattern (str): The regular expression to use when extracting data.
     """
-    def __init__(self, targets: List[Node], pattern: str):
+    def __init__(self, targets: List[Node], *patterns: str):
         self.targets = targets
-        self.pattern = re.compile(pattern)
+        self.pattern = re.compile("|".join(patterns))
 
     def extract(self) -> List[str]:
         """Pull all text matching the instances regex pattern."""
@@ -25,12 +25,3 @@ class Extractor:
         for node in self.targets:
             html += node.html
         return re.findall(self.pattern, html)
-
-
-class MultiExtractor(Extractor):
-    """Extractor class allowing for several regex patterns to be passed.
-
-    Effectively a wrapper around extractor joining all passed regex patterns with an '|'.
-    """
-    def __init__(self, targets: list, *patterns):
-        super().__init__(targets, "|".join(patterns))
