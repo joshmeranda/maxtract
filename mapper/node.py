@@ -21,7 +21,7 @@ class Node:
     """
     def __init__(self, url: str, barren: bool = False):
         self.__barren = barren
-        self.url = url
+        self.url = url[:len(url) - 1] if url[-1] == "/" else url # remove trailing slash
         self.html: str = self.__init_html()
         self._soup: BeautifulSoup = BeautifulSoup(self.html, "html5lib")
         self.children: Set[str] = set() if self.__barren else self.__init_children()
@@ -50,12 +50,16 @@ class Node:
     def __str__(self) -> str:
         return self.url
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Node url={self.url}, html={self.html}, children={self.children}>"
 
-    def __lt__(self, other: Node):
+    def __lt__(self, other: Node) -> bool:
         """Allows for sorting collections of Nodes."""
         return self.url < other.url
+
+    def __hash__(self) -> int:
+        """Allows for storing Nodes in a set in reference to their url."""
+        return hash(self.url)
 
     def __init_html(self) -> str:
         """Initialize the node's html content.

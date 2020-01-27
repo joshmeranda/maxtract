@@ -3,6 +3,7 @@ from __future__ import annotations
 import os.path
 from math import inf
 from typing import List
+from typing import Set
 from typing import Optional
 from typing import TYPE_CHECKING
 from urllib import parse
@@ -52,7 +53,7 @@ def normalize_link(parent: str, child: str) -> Optional[str]:
     return url
 
 
-def generate_map(root_url: str, local: bool = True, depth: int = inf) -> List[Node]:
+def generate_map(root_url: str, local: bool = True, depth: int = inf) -> Set[Node]:
     """Generate and return the web map starting from the given url.
 
     If local is true, links which would lead to external domains will still be listed as a child of
@@ -73,7 +74,7 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf) -> List[No
     # pylint: disable=cyclic-import
     from mapper import Node
 
-    lmap = list()
+    lmap = set()
     queue: List[Optional[str]] = [root_url, None]
     domain: Optional[str] = parse.urlparse(root_url).netloc if local else None
 
@@ -84,7 +85,7 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf) -> List[No
             continue
 
         node = Node(parent, barren=(depth == 0))
-        lmap.append(node)
+        lmap.add(node)
 
         for child in node:
             if child not in lmap:
