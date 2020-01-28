@@ -47,4 +47,5 @@ class Extractor:
         for item in soup.find_all(Extractor.IGNORE):
             item.decompose()
 
-        return soup.getText()
+        return soup.get_text("\n")
+
