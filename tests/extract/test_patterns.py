@@ -27,15 +27,17 @@ class TestPatterns(TestCase):
                    "Domestic 01: 000-000-0000",
                    "Domestic 02: 000.000.0000",
                    "Domestic 03: 000 000 0000",
-                   "International 0: +1-000-000-0000"
-                   "International 1: 1-000-000-0000"
+                   "International 0: +1-000-000-0000",
+                   "International 1: 1-000-000-0000",
+                   "Parenthesis Wrapped: (000-000-000)"
                    ]
         numbers = ["(000) 000-0000",
                    "000-000-0000",
                    "000.000.0000",
                    "000 000 0000",
                    "+1-000-000-0000",
-                   "1-000-000-0000"]
+                   "1-000-000-0000",
+                   "000-000-000"]
         pattern = re.compile(patterns.PHONE_NUMBER)
 
         for content, expected in zip(content, numbers):

@@ -2,11 +2,13 @@
 from __future__ import annotations
 import os.path
 from math import inf
+from sys import stderr
 from typing import List
 from typing import Set
 from typing import Optional
 from typing import TYPE_CHECKING
 from urllib import parse
+from error import NodeError
 
 # resolve cyclical imports and allow for Node type hints
 if TYPE_CHECKING:
@@ -84,7 +86,13 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf) -> Set[Nod
             depth -= 1
             continue
 
-        node = Node(parent, barren=(depth == 0))
+        try:
+            node = Node(parent, barren=(depth == 0))
+        except NodeError as error:
+            print(f"Could not initialize node with url '{error.url}'",
+                  file=stderr)
+            continue
+
         lmap.add(node)
 
         for child in node:

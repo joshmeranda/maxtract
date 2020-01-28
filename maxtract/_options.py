@@ -58,5 +58,8 @@ def _parse_extract(parent: argparse._SubParsersAction):
     extract_type.add_argument("--regex", action="store", type=str,
                               help="Extract using the given regex pattern")
 
-    extract.add_argument("url", action="store", nargs="+",
-                         help="List of files or urls to pars for information")
+    extract.add_argument("-f", "--target-files", action="store_true", dest="file",
+                         help="Treat each 'target' as a file to read a list of urls from.")
+    extract.add_argument("target", action="store", nargs=argparse.REMAINDER,
+                         type=str,
+                         help="List of urls or file from which to pull urls.")

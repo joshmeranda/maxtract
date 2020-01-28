@@ -73,7 +73,7 @@ class Node:
             with request.urlopen(self.url) as response:
                 html += str(response.read())
         except Exception:
-            raise NodeError(f"Could not initialize node with url '{self.url}'")
+            raise NodeError(self.url)
 
         return html
 
