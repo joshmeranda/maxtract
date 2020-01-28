@@ -3,6 +3,8 @@ from extract import patterns
 from mapper import Node
 from typing import List
 from typing import Set
+from sys import stderr
+from error import NodeError
 
 
 def run_extract(options):
@@ -16,11 +18,19 @@ def run_extract(options):
 
     if options.file:
         node_list: List[Node] = list()
-        for f in options.target:
-            with open(f, "r") as file:
-                node_list += [Node(url.strip("\r\n")) for url in file.readlines()]
+        for target in options.target:
+            try:
+                with open(target, "r") as file:
+                    node_list += [Node(url.strip("\r\n")) for url in file.readlines()]
+            except FileNotFoundError:
+                print(f"Could not find file '{target}'.", file=stderr)
     else:
-        node_list: Set[Node] = {Node(url) for url in options.target}
+        node_list: Set[Node] = set()
+        for url in options.target:
+            try:
+                node_list.add(Node(url))
+            except NodeError:
+                print(f"Error accessing url '{url}'.", file=stderr)
 
     extracted = Extractor(node_list, *extract_patterns).extract()
     for info in extracted:
