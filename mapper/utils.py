@@ -80,25 +80,30 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf) -> Set[Nod
     queue: List[Optional[str]] = [root_url, None]
     domain: Optional[str] = parse.urlparse(root_url).netloc if local else None
 
-    while queue and depth > 0 or (not lmap and depth == 0):
+    # width first search of the url tree
+    while queue and depth + 1 > 0:
         parent = queue.pop(0)
         if parent is None:
+            if not queue:
+                break
             depth -= 1
+            queue.append(None)
             continue
 
+        # attempt to create a node from the url
         try:
-            node = Node(parent, barren=(depth == 0))
+            node = Node(parent)
         except NodeError as error:
-            print(f"Could not initialize node with url '{error.url}'",
-                  file=stderr)
+            print(f"Could not initialize node with url '{error.url}'", file=stderr)
             continue
 
         lmap.add(node)
 
+        # add each child into the lmap set
         for child in node:
-            if child not in lmap:
-                if local and parse.urlparse(child).netloc != domain:
-                    continue
+            if local and parse.urlparse(child).netloc != domain:
+                continue
+            if child not in lmap and child not in queue:
                 queue.append(child)
 
     return lmap

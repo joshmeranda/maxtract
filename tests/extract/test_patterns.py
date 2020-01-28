@@ -41,6 +41,6 @@ class TestPatterns(TestCase):
         pattern = re.compile(patterns.PHONE_NUMBER)
 
         for content, expected in zip(content, numbers):
-            actual = re.search(pattern, content).group(0)
+            actual = re.search(pattern, content)
             with self.subTest(content=content):
                 self.assertEqual(expected, actual)
