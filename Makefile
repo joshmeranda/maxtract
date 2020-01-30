@@ -2,7 +2,7 @@ VENV_BIN=venv/bin
 
 MODULES=error extract mapper maxtract
 
-.PHONy: test single-test clean
+.PHONY: test single-test clean
 
 build:
 	python setup.py -v build

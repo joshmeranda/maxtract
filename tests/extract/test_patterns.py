@@ -29,7 +29,7 @@ class TestPatterns(TestCase):
                    "Domestic 03: 000 000 0000",
                    "International 0: +1-000-000-0000",
                    "International 1: 1-000-000-0000",
-                   "Parenthesis Wrapped: (000-000-000)"
+                   "Parenthesis Wrapped: (000-000-0000)"
                    ]
         numbers = ["(000) 000-0000",
                    "000-000-0000",
@@ -37,10 +37,10 @@ class TestPatterns(TestCase):
                    "000 000 0000",
                    "+1-000-000-0000",
                    "1-000-000-0000",
-                   "000-000-000"]
+                   "000-000-0000"]
         pattern = re.compile(patterns.PHONE_NUMBER)
 
         for content, expected in zip(content, numbers):
             actual = re.search(pattern, content)
             with self.subTest(content=content):
-                self.assertEqual(expected, actual)
+                self.assertEqual(expected, actual.string[actual.start():])
