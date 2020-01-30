@@ -38,7 +38,7 @@ class TestPatterns(TestCase):
                    "+1-000-000-0000",
                    "1-000-000-0000",
                    "000-000-0000"]
-        pattern = re.compile(patterns.PHONE_NUMBER)
+        pattern = re.compile(patterns.PHONE_NUMBER, re.DEBUG)
 
         for content, expected in zip(content, numbers):
             actual = re.search(pattern, content)
