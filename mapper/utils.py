@@ -8,6 +8,8 @@ from typing import Set
 from typing import Optional
 from typing import TYPE_CHECKING
 from urllib import parse
+from sys import stdout
+from io import RawIOBase
 from error import NodeError
 
 # resolve cyclical imports and allow for Node type hints
@@ -55,7 +57,8 @@ def normalize_link(parent: str, child: str) -> Optional[str]:
     return url
 
 
-def generate_map(root_url: str, local: bool = True, depth: int = inf) -> Set[Node]:
+def generate_map(root_url: str, local: bool = True, depth: int = inf, file: Optional[RawIOBase] = stdout) -> \
+        Set[Node]:
     """Generate and return the web map starting from the given url.
 
     If local is true, links which would lead to external domains will still be listed as a child of
@@ -68,12 +71,11 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf) -> Set[Nod
         root_url (str): The root url from which to begin mapping the site.
         local (bool): Whether to follow links that  would lead away from the current domain.
         depth (int): The greatest depth the link tree should grow to.
+        file (File): The file to write the found links to.
 
     Returns:
         LinkMap: The generate map.
     """
-    # pylint: disable=import-outside-toplevel
-    # pylint: disable=cyclic-import
     from mapper import Node
 
     lmap = set()
@@ -98,6 +100,10 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf) -> Set[Nod
             continue
 
         lmap.add(node)
+
+        # write the found url to the specified output file
+        if file:
+            file.write(f"{node.url}\n")
 
         # add each child into the lmap set
         for child in node:

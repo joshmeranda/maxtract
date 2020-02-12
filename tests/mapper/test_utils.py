@@ -74,7 +74,7 @@ class TestUtilGenerateMap(TestCase):
                     Node(f"{linear_dir}/child_01.html"),
                     Node(f"{linear_dir}/dir/child_10.html")}
 
-        actual = generate_map(f"{linear_dir}/index.html")
+        actual = generate_map(f"{linear_dir}/index.html", file=None)
 
         self.assertEqual(expected, actual)
 
@@ -85,15 +85,14 @@ class TestUtilGenerateMap(TestCase):
                     Node(f"{recur_dir}/child_01.html"),
                     Node(f"{recur_dir}/child_10.html")}
 
-        actual = generate_map(
-            f"file://{constants.RESOURCE_DIR}/recursive/index.html")
+        actual = generate_map(f"file://{constants.RESOURCE_DIR}/recursive/index.html", file=None)
 
         self.assertEqual(expected, actual)
 
     def test_limit_depth_zero(self):
         linear_dir = "file://" + constants.RESOURCE_DIR + "/linear"
         expected = {Node(f"{linear_dir}/index.html")}
-        actual = generate_map(f"{linear_dir}/index.html", depth=0)
+        actual = generate_map(f"{linear_dir}/index.html", depth=0, file=None)
         self.assertEqual(expected, actual)
 
     def test_limit_depth_one(self):
@@ -102,20 +101,37 @@ class TestUtilGenerateMap(TestCase):
                     Node(f"{linear_dir}/child_00.html"),
                     Node(f"{linear_dir}/child_01.html")}
 
-        actual = generate_map(f"{linear_dir}/index.html", depth=1)
+        actual = generate_map(f"{linear_dir}/index.html", depth=1, file=None)
         self.assertEqual(expected, actual)
 
     def test_ignore_external(self):
         # Will also test for normalizing link with different schemas.
         non_local_dir = "file://" + constants.RESOURCE_DIR + "/non_local"
         expected = {Node(f"{non_local_dir}/index.html")}
-        actual = generate_map(f"{non_local_dir}/index.html", local=True)
+        actual = generate_map(f"{non_local_dir}/index.html", local=True, file=None)
         self.assertEqual(expected, actual)
+
+    def test_write_to_file(self):
+        linear_dir = "file://" + constants.RESOURCE_DIR + "/linear"
+        expected = {f"{linear_dir}/index.html\n",
+                    f"{linear_dir}/child_00.html\n",
+                    f"{linear_dir}/child_01.html\n",
+                    f"{linear_dir}/dir/child_10.html\n"}
+        out_path = f"{constants.TESTS_DIR}/out"
+
+        try:
+            with open(out_path, "w") as out:
+                generate_map(f"{linear_dir}/index.html", local=True, file=out)
+
+            with open(out_path, "r") as out:
+                self.assertCountEqual(out.readlines(), expected)
+        finally:  # ensure that the output file is always removed
+            os.remove(out_path)
 
 
 class TestMapperMakeLocalCopy(TestCase):
     temp_dir = os.path.join(constants.TESTS_DIR, "temp")
-    lmap = generate_map("file://" + constants.RESOURCE_DIR + "/linear/index.html")
+    lmap = generate_map("file://" + constants.RESOURCE_DIR + "/linear/index.html", file=None)
 
     def setUp(self):
         # if tmp dir exists remove and replace it

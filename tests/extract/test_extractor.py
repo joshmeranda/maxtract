@@ -8,7 +8,7 @@ TARGET_DIR = "file://" + constants.RESOURCE_DIR + "/linear"
 
 
 class TestExtractor(TestCase):
-    lmap = generate_map("file://" + constants.RESOURCE_DIR + "/linear/index.html")
+    lmap = generate_map("file://" + constants.RESOURCE_DIR + "/linear/index.html", file=None)
 
     def test_extractor_email(self):
         extractor = Extractor(TestExtractor.lmap, patterns.EMAIL)

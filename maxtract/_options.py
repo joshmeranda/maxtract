@@ -1,4 +1,5 @@
 import argparse
+from sys import stdout
 
 
 def _parse_args() -> argparse.Namespace:
@@ -41,6 +42,8 @@ def _parse_mapper(parent: argparse._SubParsersAction):
                         help="Specify whether to create a local copy of the website")
     mapper.add_argument("-p", "--path", action="store", default=".", type=str,
                         help="The path to store the local copy, defaults to '.'")
+    mapper.add_argument("-f", "--file", action="store", default=stdout, type=argparse.FileType("w"),
+                        help="The file into which the found links are to be stored1")
 
 
 def _parse_extract(parent: argparse._SubParsersAction):
