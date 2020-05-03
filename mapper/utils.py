@@ -78,7 +78,7 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf, file: Opti
     """
     from mapper import Node
 
-    lmap = set()
+    lmap: Set[Node] = set()
     queue: List[Optional[str]] = [root_url, None]
     domain: Optional[str] = parse.urlparse(root_url).netloc if local else None
 
@@ -99,6 +99,9 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf, file: Opti
             print(f"Could not initialize node with url '{error.url}'", file=stderr)
             continue
 
+        if node in lmap:
+            continue
+
         lmap.add(node)
 
         # write the found url to the specified output file
@@ -109,8 +112,7 @@ def generate_map(root_url: str, local: bool = True, depth: int = inf, file: Opti
         for child in node:
             if local and parse.urlparse(child).netloc != domain:
                 continue
-            if child not in lmap and child not in queue:
-                queue.append(child)
+            queue.append(child)
 
     return lmap
 
