@@ -1,25 +1,39 @@
-VENV_BIN=venv/bin
+PKGS=error maxtract
+RM=rm --recursive --verbose --force
+PIP=pip3
 
-MODULES=error extract mapper maxtract
+#---------------------------------------------------------#
+# Project setup and build targets                         #
+#---------------------------------------------------------#
 
-.PHONY: test single-test clean
+venv:
+	${PIP} install --progress-bar ascii virtualenv
+	python -m virtualenv venv
 
-build:
-	python setup.py -v build
 
-install:
-	python setup.py -v install
+#---------------------------------------------------------#
+# Phony project maintenance targets                       #
+#---------------------------------------------------------#
 
-single-test:
-	source ${VENV_BIN}/activate; \
-	python -m unittest -v ${TEST}
+.PHONY: setup fix-imports check test mostlyclean clean
 
-test:
-	source ${VENV_BIN}/activate; \
-	python -m unittest -v
+setup: venv
+	source venv/bin/activate; \
+		${PIP} install --progress-bar ascii --requirement requirements.txt
 
 lint:
-	pylint --verbose ${MODULES}
+	pylint --output-format colorized ${PKGS} setup.py
 
-clean:
-	rm --verbose --recursive --force build dist
+fix-imports:
+	isort --combine-as \
+		--combine-star \
+		--lines-after-imports 2 \
+		--recursive \
+		${PKGS} setup.py
+
+mostlyclean:
+	find . -name __pycache__ -exec ${RM} '{}' +
+	${RM} build logs
+
+clean: mostlyclean
+	${RM} venv

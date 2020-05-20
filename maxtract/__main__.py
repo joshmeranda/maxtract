@@ -1,46 +1,74 @@
 #!/usr/bin/env python3
-from maxtract._options import _parse_args
-from argparse import Namespace
-from typing import List, Set
-from extract import patterns, Extractor
-from mapper import Node
-from error import NodeError
-from sys import stderr, stdout
-from mapper.utils import generate_map, make_local_copy
+import argparse
+import asyncio
+import typing
+import urllib.parse as parse
+
+import maxtract
+import maxtract.extract as extract
+import maxtract.traverse as traverse
+
+
+def options():
+    maxtract = argparse.ArgumentParser(prog="maxtract", add_help=True,
+                                       epilog="If no extraction pattern is specified, the set of traversed links is returned",
+                                       formatter_class=argparse.MetavarTypeHelpFormatter,
+                                       description="traverse and extract information from a website")
+    maxtract.add_argument("-v", "--verbose", action="store_true", help="show the url being traversed")
+
+    maxtract.add_argument("root_url", action="store", type=str, metavar="url",
+                          help="the url to start the site traversal one")
+
+    maxtract.add_argument("-d", "--depth", action="store", type=int, default=-1,
+                          help="the greatest depth of links to follow")
+
+    maxtract.add_argument("-e", "--extract", action="store", nargs="+", type=str, metavar="patterns",
+                          help="the regex pattern(s) to extract or a supported alias ('phone' and 'email')")
+
+    maxtract.add_argument("-c", "--copy", action="store", type=str,
+                          help="make a local copy of the retrieved nodes (links will not be resolved to the local version)")
+
+    return maxtract.parse_args()
 
 
 def main():
-    options: Namespace = _parse_args()
+    opts = options()
 
-    extract_patterns: List[str] = list()
-    if options.email:
-        extract_patterns.append(patterns.EMAIL)
-    if options.phone:
-        extract_patterns.append(patterns.PHONE_NUMBER)
-    if options.regex:
-        extract_patterns.append(options.regex)
+    nodes: typing.Set[traverse.Node] = set()
 
-    out = stdout if not options.file else options.file
+    if not opts.verbose:
+        maxtract.verbose_print = lambda *args: None
 
-    if options.depth:
-        node_list = generate_map(options.url, not options.travel, options.depth, out)
+    asyncio.run(traverse.traverse_site(opts.root_url, opts.depth, nodes, parse.urlparse(opts.root_url).netloc))
+
+    # clear and reset output line
+    maxtract.verbose_print("")
+
+    if opts.extract:
+        patterns = list()
+        for pattern in opts.extract:
+            if pattern == "phone":
+                patterns.append(extract.Patterns.PHONE_NUMBER)
+            elif pattern == "email":
+                patterns.append(extract.Patterns.EMAIL)
+            else:
+                patterns.append(patterns)
+
+        ext = extract.Extractor(nodes, *patterns)
+
+        # clear and reset output line
+        maxtract.verbose_print("")
+
+        [print(data) for data in ext.extract()]
     else:
-        node_list = generate_map(options.url, not options.travel, file=out)
+        [print(node.url) for node in nodes]
 
-    if options.copy:
-        make_local_copy(list(node_list), options.path)
-
-    node_list: Set[Node] = set()
-    for url in options.target:
-        try:
-            node_list.add(Node(url))
-        except NodeError:
-            print(f"Error accessing url '{url}'.", file=stderr)
-
-    extracted = Extractor(node_list, *extract_patterns).extract()
-    for info in extracted:
-        print(info)
+    if opts.copy is not None:
+        traverse.make_local_copy(nodes, opts.copy)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
