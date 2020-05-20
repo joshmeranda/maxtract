@@ -10,6 +10,7 @@ import maxtract.traverse as traverse
 
 
 def options():
+    """Parses command line arguments."""
     maxtract = argparse.ArgumentParser(prog="maxtract", add_help=True,
                                        epilog="If no extraction pattern is specified, the set of traversed links is returned",
                                        formatter_class=argparse.MetavarTypeHelpFormatter,

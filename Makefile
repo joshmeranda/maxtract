@@ -10,7 +10,6 @@ venv:
 	${PIP} install --progress-bar ascii virtualenv
 	python -m virtualenv venv
 
-
 #---------------------------------------------------------#
 # Phony project maintenance targets                       #
 #---------------------------------------------------------#

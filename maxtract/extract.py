@@ -29,13 +29,8 @@ class Patterns:
 class Extractor:
     """Extracts data from the urls provided.
 
-    Attributes:
-        targets (list): The list of urls from which to extract data.
-        pattern (str): The regular expression to use when extracting data.
-
-    Params:
-        targets (list): The list of urls from which to extract data.
-        pattern (str): The regular expression to use when extracting data.
+    :param targets: The set of urls from which to extract data.
+    :param patterns: The vararg patterns to use for data extraction.
     """
     _IGNORE = ["style", "script"]
 
@@ -44,7 +39,10 @@ class Extractor:
         self.pattern = re.compile("|".join(patterns))
 
     def extract(self) -> Set[str]:
-        """Pull all text matching the instances regex pattern."""
+        """Pull all text matching the instances regex pattern.
+
+        :return; A set of all the strings matching the given regex patterns.
+        """
         data: Set[str] = set()
 
         for node in self.targets:
@@ -58,11 +56,8 @@ class Extractor:
     def _clean_html(html: str) -> str:
         """Removes unwanted tag types from the html.
 
-        Params:
-            html (str): The html to be cleaned
-
-        Returns:
-            (str): The cleaned html content.
+        :param html: The html to be cleaned.
+        :return: The cleaned html content.
         """
         soup = BeautifulSoup(html, "html5lib")
 

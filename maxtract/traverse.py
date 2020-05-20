@@ -23,31 +23,33 @@ class NodeError(Exception):
 class Node:
     """A node for each url, mapping the url to its html content and child links.
 
-    Attributes:
-        url (str): The url for the node.
-        html (str); The html content received from the url.
-        children (Set[str]): The set of child links
-
-    Params:
-        url (str): The url for the node.
+    :param url: THe url for the node.
     """
-    def __init__(self, url: str, barren: bool = False):
-        self.__barren = barren
-        self.url = url.rstrip("/")  # remove trailing slash
-        self.html: str = self.__init_html()
-        self._soup: BeautifulSoup = BeautifulSoup(self.html, "html5lib")
-        self.children: Set[str] = set() if self.__barren else self.__init_children()
 
-    def __iter__(self):
-        """Provides a generator for iterating over the children of a node."""
-        for child in self.children:
-            yield child
+    def __init__(self, url: str):
+        self.url = url.rstrip("/")  # remove trailing slash
+
+        # retrieve the html at the given url.
+        try:
+            request = requests.get(self.url, timeout=1)
+
+            if not request.ok:
+                raise NodeError(self.url, "Not Found")
+
+            self.html = request.text
+        except TimeoutError:
+            raise NodeError(self.url, "Timeout")
+
+        self._soup: BeautifulSoup = BeautifulSoup(self.html, "html5lib")
+
+        # scrape all children links from the url html
+        self.children: Set[str] = {normalize_link(self.url, a["href"])
+                                   for a in self._soup.find_all("a", href=True)}
 
     def __eq__(self, other: Union[Node, str]):
         """Two nodes can be considered equal if they share the same url.
 
-        This is done to avoid costly equality checks with large html contents and with many child
-        links.
+        This is done to avoid costly equality checks with large html files with many children.
         """
         if isinstance(other, str):
             is_equal = other == self.url
@@ -71,33 +73,6 @@ class Node:
     def __hash__(self) -> int:
         """Allows for storing Nodes in a set in reference to their url."""
         return hash(self.url)
-
-    def __init_html(self) -> str:
-        """Initialize the node's html content.
-
-        Raises:
-            NodeError: On error receiving html content.
-        """
-
-        try:
-            r = requests.get(self.url, timeout=1)
-
-            if not r.ok:
-                raise NodeError(self.url, "Not Found")
-
-            return r.text
-        except TimeoutError:
-            raise NodeError(self.url, "Timeout")
-
-    def __init_children(self) -> Set[str]:
-        """Initialize the node's child set."""
-        return {normalize_link(self.url, a["href"])
-                for a in self._soup.find_all("a", href=True)}
-
-    def update(self):
-        """Update the Node's html and children from the current values."""
-        self.html = self.__init_html()
-        self.children: Set[str] = set() if self.__barren else self.__init_children()
 
 
 async def traverse_site(root_node: typing.Union[str, Node], depth: int = -1, visited: typing.Set[Node] = set(),
@@ -201,8 +176,6 @@ def make_local_copy(source: typing.Set[Node], path: str):
 
         if os.path.isdir(full_path):
             continue
-
-        print(full_path)
 
         if not os.path.exists(os.path.dirname(full_path)):
             print(full_path)
