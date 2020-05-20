@@ -37,7 +37,7 @@ class Node:
                 raise NodeError(self.url, "Not Found")
 
             self.html = request.text
-        except TimeoutError:
+        except requests.Timeout:
             raise NodeError(self.url, "Timeout")
 
         self._soup: BeautifulSoup = BeautifulSoup(self.html, "html5lib")
