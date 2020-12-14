@@ -1,27 +1,27 @@
-use std::str;
 use std::collections::HashSet;
+use std::str;
 use std::string::String;
 
 use curl::easy::{Easy2, Handler, WriteError};
 use regex::{Match, Regex};
 
 use select::document::Document;
-use select::predicate::Name;
 use select::node::Node as DomNode;
+use select::predicate::Name;
 
-pub enum PatternType {
+pub enum PatternType<'a> {
     Phone,
     Email,
-    Other(Regex)
+    Regex(&'a str),
 }
 
-impl PatternType {
-    pub fn get_regexp(pattern: PatternType) -> Regex {
+impl PatternType<'_> {
+    pub fn get_regexp(pattern: PatternType) -> String {
         match pattern {
             // todo: need a far better phone parser
-            PatternType::Phone => Regex::new("\\(?\\d{3}\\)?-? *\\d{3}-? *-?\\d{4}").unwrap(),
-            PatternType::Email => Regex::new("([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})").unwrap(),
-            PatternType::Other(regexp) => regexp
+            PatternType::Phone => String::from("\\(?\\d{3}\\)?-? *\\d{3}-? *-?\\d{4}"),
+            PatternType::Email => String::from("([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})"),
+            PatternType::Regex(regexp) => String::from(regexp)
         }
     }
 }
@@ -39,7 +39,7 @@ impl Handler for HtmlHandler {
 pub struct Node {
     url: String,
     children: Option<Vec<Node>>,
-    data: HashSet<String>
+    data: HashSet<String>,
 }
 
 impl Node {
@@ -48,10 +48,16 @@ impl Node {
     /// todo: handle absolute urls
     /// todo: handle complete urls (scheme, domain, path, query)
     /// todo: ignore bookmarks
-    pub fn traverse(url: &str, regexp: &Regex, max_depth: Option<usize>, depth: usize,
-                    visited: &mut HashSet<String>) -> Option<Node> {
+    /// todo: allow for matching Phone and Email
+    pub fn traverse(
+        url: &str,
+        regexp: &Regex,
+        max_depth: Option<usize>,
+        depth: usize,
+        visited: &mut HashSet<String>,
+    ) -> Option<Node> {
         if max_depth.is_some() && depth > max_depth.unwrap() || visited.contains(url) {
-            return None
+            return None;
         }
 
         let handler = HtmlHandler(vec![]);
@@ -62,7 +68,7 @@ impl Node {
         easy.url(url).unwrap();
         if easy.perform().is_err() {
             eprintln!("ERROR {}: {}", easy.response_code().unwrap(), url);
-            return None
+            return None;
         }
 
         let handler: &HtmlHandler = easy.get_ref();
@@ -73,18 +79,24 @@ impl Node {
         let document: Document = Document::from(html.as_str());
         let children: Vec<Node> = (&document)
             .find(Name("a"))
-            .filter_map(|node: DomNode| {
-                match node.attr("href") {
-                    Some(href) => Node::traverse(href, regexp, max_depth, depth + 1, visited),
-                    None => None
-                }
-            }).collect();
+            .filter_map(|node: DomNode| match node.attr("href") {
+                Some(href) => Node::traverse(href, regexp, max_depth, depth + 1, visited),
+                None => None,
+            })
+            .collect();
 
-        let data: HashSet<String> = regexp.find_iter(html.as_str()).map(|m: Match| {
-            println!("\n{}", m.as_str());
-            String::from(m.as_str())
-        }).collect();
+        let data: HashSet<String> = regexp
+            .find_iter(html.as_str())
+            .map(|m: Match| {
+                println!("\n{}", m.as_str());
+                String::from(m.as_str())
+            })
+            .collect();
 
-        Some(Node { url: String::from(url), children: Some(children), data })
+        Some(Node {
+            url: String::from(url),
+            children: Some(children),
+            data,
+        })
     }
 }

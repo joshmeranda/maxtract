@@ -1,7 +1,7 @@
 [package]
 name = "maxtract"
 version = "0.1.0"
-authors = ["joshmeranda <joshmeranda@gmail.com>"]
+authors = ["Joshua Meranda <joshmeranda@gmail.com>"]
 edition = "2018"
 description = "A command line tool for extracting information from websites"
 
