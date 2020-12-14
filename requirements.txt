@@ -1,5 +1,0 @@
-beautifulsoup4
-html5lib
-pylint
-urllib3
-requests

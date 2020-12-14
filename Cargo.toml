@@ -1,0 +1,15 @@
+[package]
+name = "maxtract"
+version = "0.1.0"
+authors = ["joshmeranda <joshmeranda@gmail.com>"]
+edition = "2018"
+description = "A command line tool for extracting information from websites"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+curl = "0.4.34"
+regex = "1"
+select = "0.5.0"
+url = "2.2.0"
+clap = "2.33.0"
