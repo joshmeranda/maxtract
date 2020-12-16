@@ -1,6 +1,8 @@
 mod extract;
+mod node;
 
 use std::collections::HashSet;
+use std::str::FromStr;
 
 use regex::Regex;
 
@@ -8,8 +10,11 @@ use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, Arg, ArgGroup, ArgMatches,
 };
 
-use extract::{Node, PatternType};
-use std::str::FromStr;
+use url::{Url, ParseError};
+
+use extract::PatternType;
+
+use node::Node;
 
 fn main() {
     let app: ArgMatches = App::new(crate_name!())
@@ -70,7 +75,13 @@ fn main() {
         None
     };
 
-    let root: &str = app.value_of("root").unwrap();
+    let root: Url = match Url::parse(app.value_of("root").unwrap()) {
+        Ok(url) => url,
+        Err(err) => {
+            eprintln!("{}", err.to_string());
+            return
+        }
+    };
 
     // get the matching pattern
     let mut patterns: Vec<String> = vec![];
@@ -91,6 +102,5 @@ fn main() {
     let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
 
     let mut visited: HashSet<String> = HashSet::new();
-
-    let _node: Option<Node> = Node::traverse(root, &regexp, max_depth, 0, &mut visited);
+    let _node: Option<Node> = Node::from(root, &regexp);
 }
