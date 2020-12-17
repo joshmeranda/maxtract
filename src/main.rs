@@ -10,9 +10,9 @@ use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, Arg, ArgGroup, ArgMatches,
 };
 
-use url::{Url, ParseError};
+use url::{ParseError, Url};
 
-use extract::PatternType;
+use extract::{Graph, PatternType};
 
 use node::Node;
 
@@ -79,7 +79,7 @@ fn main() {
         Ok(url) => url,
         Err(err) => {
             eprintln!("{}", err.to_string());
-            return
+            return;
         }
     };
 
@@ -95,12 +95,14 @@ fn main() {
     }
 
     if app.is_present("regex") {
-        patterns.push(PatternType::get_regexp(PatternType::Regex(app.value_of("regex").unwrap())));
+        patterns.push(PatternType::get_regexp(PatternType::Regex(
+            app.value_of("regex").unwrap(),
+        )));
     }
 
     let patterns: Vec<&str> = patterns.iter().map(String::as_str).collect();
     let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
 
     let mut visited: HashSet<String> = HashSet::new();
-    let _node: Option<Node> = Node::from(&root, &regexp);
+    let _graph: Graph = Graph::new(root, &regexp);
 }

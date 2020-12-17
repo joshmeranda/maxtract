@@ -1,7 +1,7 @@
+use std::cmp::Eq;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::str;
-use std::cmp::Eq;
 use std::string::String;
 
 use curl::easy::{Easy2, Handler, WriteError};
@@ -11,7 +11,7 @@ use select::document::Document;
 use select::node::Node as DomNode;
 use select::predicate::Name;
 
-use url::{self, Url, ParseError};
+use url::{self, ParseError, Url};
 
 /// Simple handler for storing the received content.
 struct HtmlHandler(Vec<u8>);
@@ -36,7 +36,7 @@ impl Node {
     /// todo: handle absolute urls
     /// todo: handle complete urls (scheme, domain, path, query)
     /// todo: ignore bookmarks
-    pub fn from(url: &Url, regexp: &Regex) -> Option<Node> {
+    pub fn new(url: &Url, regexp: &Regex) -> Option<Node> {
         let handler = HtmlHandler(vec![]);
         let mut easy: Easy2<HtmlHandler> = Easy2::new(handler);
 
@@ -56,15 +56,13 @@ impl Node {
         let document: Document = Document::from(html.as_str());
         let children: Vec<Url> = (&document)
             .find(Name("a"))
-            .filter_map(|node: DomNode|
-                match node.attr("href") {
-                    Some(href) => match Node::normalize_parse(href, &url) {
-                        Ok(url) => Some(url),
-                        Err(_) => None
-                    }
-                    None => None
-                }
-            )
+            .filter_map(|node: DomNode| match node.attr("href") {
+                Some(href) => match Node::normalize_parse(href, &url) {
+                    Ok(url) => Some(url),
+                    Err(_) => None,
+                },
+                None => None,
+            })
             .collect();
 
         let data: HashSet<String> = regexp
@@ -96,7 +94,7 @@ impl Node {
 
                 Ok(url)
             }
-            Err(err) => Err(err)
+            Err(err) => Err(err),
         }
     }
 }
@@ -107,8 +105,7 @@ impl Hash for Node {
     }
 }
 
-impl Eq for Node {
-}
+impl Eq for Node {}
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {

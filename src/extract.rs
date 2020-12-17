@@ -12,6 +12,7 @@ use select::predicate::Name;
 use url::Url;
 
 use crate::node::Node;
+
 use std::ops::Deref;
 
 pub enum PatternType<'a> {
@@ -31,19 +32,40 @@ impl PatternType<'_> {
     }
 }
 
-struct Graph {
-    graph: HashSet<Url>,
+pub struct Graph {
+    graph: HashSet<Node>,
 }
 
 impl Graph {
-    pub fn from(url: Url, regexp: &Regex) -> Graph {
+    pub fn new(url: Url, regexp: &Regex) -> Graph {
         let mut graph: HashSet<Node> = HashSet::new();
+        let mut next_targets: VecDeque<Url> = VecDeque::new();
+
+        let mut target: Url = url;
 
         loop {
-            // todo: validate this unwrap first
-            let node: Node = Node::from(&url, regexp).unwrap();
+            // search graph for node where `node.url == target`
+            if graph.iter().find(|node| node.url == target).is_none() {
+                // todo: validate this unwrap first
+                let node: Node = Node::new(&target, regexp).unwrap();
 
-            graph.insert(node);
+                // add node children to `next_targets`
+                node.children
+                    .iter()
+                    .filter(|child| graph.iter().find(|n| n.url == **child).is_none())
+                    .for_each(|child| next_targets.push_back(child.clone()));
+
+                graph.insert(node);
+            }
+
+            println!("{}", next_targets.len());
+
+            match next_targets.pop_front() {
+                Some(url) => target = url,
+                None => break,
+            }
         }
+
+        Graph { graph }
     }
 }
