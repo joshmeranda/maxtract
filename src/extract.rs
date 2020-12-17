@@ -37,6 +37,7 @@ pub struct Graph {
 }
 
 impl Graph {
+    /// todo: implement depth
     pub fn new(url: Url, regexp: &Regex) -> Graph {
         let mut graph: HashSet<Node> = HashSet::new();
         let mut next_targets: VecDeque<Url> = VecDeque::new();
@@ -44,6 +45,7 @@ impl Graph {
         let mut target: Url = url;
 
         loop {
+            println!("\t{}", target.as_str());
             // search graph for node where `node.url == target`
             if graph.iter().find(|node| node.url == target).is_none() {
                 // todo: validate this unwrap first
@@ -53,12 +55,14 @@ impl Graph {
                 node.children
                     .iter()
                     .filter(|child| graph.iter().find(|n| n.url == **child).is_none())
-                    .for_each(|child| next_targets.push_back(child.clone()));
+                    .for_each(|child| {
+                        if !next_targets.contains(child) {
+                            next_targets.push_back(child.clone())
+                        }
+                    });
 
                 graph.insert(node);
             }
-
-            println!("{}", next_targets.len());
 
             match next_targets.pop_front() {
                 Some(url) => target = url,
