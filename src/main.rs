@@ -103,6 +103,5 @@ fn main() {
     let patterns: Vec<&str> = patterns.iter().map(String::as_str).collect();
     let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
 
-    let mut visited: HashSet<String> = HashSet::new();
     let _graph: Graph = Graph::new(root, &regexp);
 }

@@ -38,6 +38,8 @@ pub struct Graph {
 
 impl Graph {
     /// todo: implement depth
+    /// todo: perform several new nodes concurrently
+    /// todo: implement verbose mode
     pub fn new(url: Url, regexp: &Regex) -> Graph {
         let mut graph: HashSet<Node> = HashSet::new();
         let mut next_targets: VecDeque<Url> = VecDeque::new();
@@ -45,6 +47,8 @@ impl Graph {
         let mut target: Url = url;
 
         loop {
+            println!("{}", target.as_str()); // to be replaced with a verbose mode
+
             // search graph for node where `node.url == target`
             if let Some(node) = Node::new(&target, regexp) {
                 // add node children to `next_targets`

@@ -31,7 +31,9 @@ pub struct Node {
 }
 
 impl Node {
-    /// Construct a new node tree from the given root url extracting the given data as it runs.
+    /// Construct a new node tree from the given root url extracting the given data as it runs. All
+    /// children must have the same domain as the given url, so any links to external sites are simply ignored.
+    ///
     /// todo: handle relative urls
     /// todo: handle absolute urls
     /// todo: handle complete urls (scheme, domain, path, query)
@@ -56,19 +58,27 @@ impl Node {
         let document: Document = Document::from(html.as_str());
         let children: Vec<Url> = (&document)
             .find(Name("a"))
-            .filter_map(|node: DomNode| match node.attr("href") {
-                Some(href) => match Node::normalize_parse(href, &url) {
-                    Ok(url) => Some(url),
-                    Err(_) => None,
-                },
-                None => None,
+            .filter_map(|node: DomNode| {
+                if let Some(href) = node.attr("href") {
+                    if let Ok(child) = Node::normalize_parse(href, &url) {
+                        if child.domain() == url.domain() {
+                            return Some(child);
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
             })
             .collect();
 
         let data: HashSet<String> = regexp
             .find_iter(html.as_str())
             .map(|m: Match| {
-                println!("{}", m.as_str());
+                // println!("{}", m.as_str());
                 String::from(m.as_str())
             })
             .collect();
@@ -85,7 +95,6 @@ impl Node {
     /// different parameters could render different content and child urls.
     ///
     /// todo: return result over option?
-    /// todo: stay within domain
     fn normalize_parse(child: &str, parent: &Url) -> Result<Url, ParseError> {
         let parser = Url::options().base_url(Some(parent));
 
