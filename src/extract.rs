@@ -45,16 +45,14 @@ impl Graph {
         let mut target: Url = url;
 
         loop {
-            println!("\t{}", target.as_str());
             // search graph for node where `node.url == target`
-            if graph.iter().find(|node| node.url == target).is_none() {
-                // todo: validate this unwrap first
-                let node: Node = Node::new(&target, regexp).unwrap();
-
+            if let Some(node) = Node::new(&target, regexp) {
                 // add node children to `next_targets`
                 node.children
                     .iter()
+                    // filter children already in graph
                     .filter(|child| graph.iter().find(|n| n.url == **child).is_none())
+                    // add new children to next_targets
                     .for_each(|child| {
                         if !next_targets.contains(child) {
                             next_targets.push_back(child.clone())
@@ -62,6 +60,8 @@ impl Graph {
                     });
 
                 graph.insert(node);
+            } else {
+                eprintln!("ERROR: could not create node for '{}'", target.as_str());
             }
 
             match next_targets.pop_front() {

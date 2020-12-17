@@ -68,7 +68,7 @@ fn main() {
         if let Ok(depth) = usize::from_str(depth_s) {
             Some(depth)
         } else {
-            eprintln!("error: Unable to parse depth as uint\n{}", app.usage());
+            eprintln!("ERROR: Unable to parse depth as uint\n{}", app.usage());
             return;
         }
     } else {

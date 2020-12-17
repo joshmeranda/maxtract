@@ -36,6 +36,7 @@ impl Node {
     /// todo: handle absolute urls
     /// todo: handle complete urls (scheme, domain, path, query)
     /// todo: ignore bookmarks
+    /// todo: return Result? NodeError?
     pub fn new(url: &Url, regexp: &Regex) -> Option<Node> {
         let handler = HtmlHandler(vec![]);
         let mut easy: Easy2<HtmlHandler> = Easy2::new(handler);
@@ -44,7 +45,6 @@ impl Node {
         easy.url(url.as_str()).unwrap();
 
         if easy.perform().is_err() {
-            eprintln!("ERROR {}: {}", easy.response_code().unwrap(), url);
             return None;
         }
 
@@ -68,7 +68,7 @@ impl Node {
         let data: HashSet<String> = regexp
             .find_iter(html.as_str())
             .map(|m: Match| {
-                println!("\n{}", m.as_str());
+                println!("{}", m.as_str());
                 String::from(m.as_str())
             })
             .collect();
@@ -85,6 +85,7 @@ impl Node {
     /// different parameters could render different content and child urls.
     ///
     /// todo: return result over option?
+    /// todo: stay within domain
     fn normalize_parse(child: &str, parent: &Url) -> Result<Url, ParseError> {
         let parser = Url::options().base_url(Some(parent));
 
