@@ -102,5 +102,5 @@ fn main() {
     let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
 
     let mut visited: HashSet<String> = HashSet::new();
-    let _node: Option<Node> = Node::from(root, &regexp);
+    let _node: Option<Node> = Node::from(&root, &regexp);
 }

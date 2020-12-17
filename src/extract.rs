@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::str;
 use std::string::String;
 
@@ -8,6 +8,11 @@ use regex::{Match, Regex};
 use select::document::Document;
 use select::node::Node as DomNode;
 use select::predicate::Name;
+
+use url::Url;
+
+use crate::node::Node;
+use std::ops::Deref;
 
 pub enum PatternType<'a> {
     Phone,
@@ -22,6 +27,23 @@ impl PatternType<'_> {
             PatternType::Phone => String::from("\\(?\\d{3}\\)?-? *\\d{3}-? *-?\\d{4}"),
             PatternType::Email => String::from("([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})"),
             PatternType::Regex(regexp) => String::from(regexp)
+        }
+    }
+}
+
+struct Graph {
+    graph: HashSet<Url>,
+}
+
+impl Graph {
+    pub fn from(url: Url, regexp: &Regex) -> Graph {
+        let mut graph: HashSet<Node> = HashSet::new();
+
+        loop {
+            // todo: validate this unwrap first
+            let node: Node = Node::from(&url, regexp).unwrap();
+
+            graph.insert(node);
         }
     }
 }

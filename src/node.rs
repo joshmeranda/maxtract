@@ -1,5 +1,7 @@
 use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
 use std::str;
+use std::cmp::Eq;
 use std::string::String;
 
 use curl::easy::{Easy2, Handler, WriteError};
@@ -9,7 +11,7 @@ use select::document::Document;
 use select::node::Node as DomNode;
 use select::predicate::Name;
 
-use url::{Url, ParseError};
+use url::{self, Url, ParseError};
 
 /// Simple handler for storing the received content.
 struct HtmlHandler(Vec<u8>);
@@ -22,9 +24,9 @@ impl Handler for HtmlHandler {
     }
 }
 
-pub  struct Node {
-    url: Url,
-    children: Vec<Url>,
+pub struct Node {
+    pub url: Url,
+    pub children: Vec<Url>,
     data: HashSet<String>,
 }
 
@@ -34,7 +36,7 @@ impl Node {
     /// todo: handle absolute urls
     /// todo: handle complete urls (scheme, domain, path, query)
     /// todo: ignore bookmarks
-    pub fn from(url: Url, regexp: &Regex) -> Option<Node> {
+    pub fn from(url: &Url, regexp: &Regex) -> Option<Node> {
         let handler = HtmlHandler(vec![]);
         let mut easy: Easy2<HtmlHandler> = Easy2::new(handler);
 
@@ -74,7 +76,7 @@ impl Node {
             .collect();
 
         Some(Node {
-            url,
+            url: Url::parse(url.to_string().as_str()).unwrap(),
             children,
             data,
         })
@@ -96,5 +98,24 @@ impl Node {
             }
             Err(err) => Err(err)
         }
+    }
+}
+
+impl Hash for Node {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.url.hash(state);
+    }
+}
+
+impl Eq for Node {
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.url == other.url
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        self.url != other.url
     }
 }
