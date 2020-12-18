@@ -37,14 +37,19 @@ pub struct Graph {
 }
 
 impl Graph {
-    /// todo: implement depth
     /// todo: perform several new nodes concurrently
     /// todo: implement verbose mode
-    pub fn new(url: Url, regexp: &Regex) -> Graph {
+    /// todo: consider usize max for usize type if max_dept is None
+    pub fn new(url: Url, regexp: &Regex, max_depth: Option<usize>) -> Graph {
         let mut graph: HashSet<Node> = HashSet::new();
         let mut next_targets: VecDeque<Url> = VecDeque::new();
 
         let mut target: Url = url;
+
+        let mut depth: usize = 0;
+
+        // the length of graph that will indicate a new depth in the graph
+        let mut next_depth_len: usize = 1;
 
         loop {
             println!("{}", target.as_str()); // to be replaced with a verbose mode
@@ -66,6 +71,17 @@ impl Graph {
                 graph.insert(node);
             } else {
                 eprintln!("ERROR: could not create node for '{}'", target.as_str());
+            }
+
+            if let Some(max) = max_depth {
+                if next_depth_len == graph.len() {
+                    depth += 1;
+                    next_depth_len = graph.len() + next_targets.len();
+                }
+
+                if depth > max {
+                    break;
+                }
             }
 
             match next_targets.pop_front() {
