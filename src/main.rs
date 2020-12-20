@@ -1,7 +1,6 @@
 mod extract;
 mod node;
 
-use std::collections::HashSet;
 use std::str::FromStr;
 
 use regex::Regex;
@@ -10,12 +9,13 @@ use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, Arg, ArgGroup, ArgMatches,
 };
 
-use url::{ParseError, Url};
+use url::Url;
 
 use extract::{Graph, PatternType};
 
-use node::Node;
-
+// todo: better output
+//   json?
+//   flat &| mapped
 fn main() {
     let app: ArgMatches = App::new(crate_name!())
         .about(crate_description!())
@@ -103,5 +103,12 @@ fn main() {
     let patterns: Vec<&str> = patterns.iter().map(String::as_str).collect();
     let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
 
-    let _graph: Graph = Graph::new(root, &regexp, max_depth);
+    let graph: Graph = Graph::new(root, &regexp, max_depth);
+
+    for (url, node) in graph.iter() {
+        println!("{}", url.as_str());
+        for datum in &node.data {
+            println!("{}", datum);
+        }
+    }
 }
