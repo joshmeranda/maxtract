@@ -17,58 +17,60 @@ use extract::{Graph, PatternType};
 //   json?
 //   flat &| mapped
 fn main() {
-    let app: ArgMatches = App::new(crate_name!())
+    let app = App::new(crate_name!())
         .about(crate_description!())
         .author(crate_authors!())
         .version(crate_version!())
         .arg(
-            Arg::with_name("max-depth")
+            Arg::new("max-depth")
                 .long("max-depth")
-                .short("d")
+                .short('d')
                 .value_name("N")
-                .help("the maximum depth of links to walk downs"),
+                .about("the maximum depth of links to walk downs"),
         )
         .arg(
-            Arg::with_name("phone")
+            Arg::new("phone")
                 .long("phone")
-                .short("p")
+                .short('p')
                 .takes_value(false)
-                .help("specify to extract phone numbers"),
+                .about("specify to extract phone numbers")
+                .help_heading(Some("Extractors")),
         )
         .arg(
-            Arg::with_name("email")
+            Arg::new("email")
                 .long("email")
-                .short("e")
+                .short('e')
                 .takes_value(false)
-                .help("specify to extract emails"),
+                .about("specify to extract emails")
+                .help_heading(Some("Extractors")),
         )
         .arg(
-            Arg::with_name("regex")
+            Arg::new("regex")
                 .long("regex")
-                .short("r")
+                .short('r')
                 .value_name("REGEX")
-                .help("specify the pattern to use for extraction"),
+                .about("specify the pattern to use for extraction")
+                .help_heading(Some("Extractors")),
         )
         .group(
-            ArgGroup::with_name("pattern")
+            ArgGroup::new("pattern")
                 .args(&["phone", "email", "regex"])
                 .multiple(true)
                 .required(true),
         )
         .arg(
-            Arg::with_name("root")
+            Arg::new("root")
                 .required(true)
                 .value_name("URL")
-                .help("the url at which to start the search"),
-        )
-        .get_matches();
+                .about("the url at which to start the search"),
+        ).get_matches();
 
     // extract the values needed for traversal
     let max_depth: Option<usize> = if let Some(depth_s) = app.value_of("max-depth") {
         if let Ok(depth) = usize::from_str(depth_s) {
             Some(depth)
         } else {
-            eprintln!("ERROR: Unable to parse depth as uint\n{}", app.usage());
+            eprintln!("ERROR: Unable to parse depth as uint\nsee `{} --help` for more information.", crate_name!());
             return;
         }
     } else {
