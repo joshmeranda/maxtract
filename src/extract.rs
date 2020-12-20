@@ -1,13 +1,16 @@
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::str;
-use std::string::String;
+use std::{
+    collections::{
+        hash_map::{HashMap, Iter},
+        VecDeque},
+    str,
+    string::String
+};
 
 use regex::Regex;
 
 use url::Url;
 
 use crate::node::Node;
-use std::collections::hash_map::Iter;
 
 pub enum PatternType<'a> {
     Phone,
@@ -48,8 +51,6 @@ impl Graph {
         let mut next_depth_len: usize = 1;
 
         loop {
-            println!("{}", target.as_str()); // to be replaced with a verbose mode
-
             // search graph for node where `node.url == target`
             if let Some(node) = Node::new(&target, regexp) {
                 // add node children to `next_targets`

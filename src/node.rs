@@ -1,16 +1,20 @@
-use std::cmp::Eq;
-use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
-use std::str;
-use std::string::String;
+use std::{
+    cmp::Eq,
+    collections::HashSet,
+    hash::{Hash, Hasher},
+    str,
+    string::String
+};
 
 use curl::easy::{Easy2, Handler, WriteError};
 
 use regex::{Match, Regex};
 
-use select::document::Document;
-use select::node::Node as DomNode;
-use select::predicate::Name;
+use select::{
+    document::Document,
+    node::Node as DomNode,
+    predicate::Name
+};
 
 use url::{self, ParseError, ParseOptions, Url};
 

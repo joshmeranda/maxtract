@@ -16,11 +16,18 @@ use extract::{Graph, PatternType};
 // todo: better output
 //   json?
 //   flat &| mapped
+// todo: simple testing data
 fn main() {
-    let app = App::new(crate_name!())
+    let app: ArgMatches = App::new(crate_name!())
         .about(crate_description!())
         .author(crate_authors!())
         .version(crate_version!())
+        .arg(
+            Arg::new("root")
+                .required(true)
+                .value_name("URL")
+                .about("the url at which to start the search"),
+        )
         .arg(
             Arg::new("max-depth")
                 .long("max-depth")
@@ -59,11 +66,30 @@ fn main() {
                 .required(true),
         )
         .arg(
-            Arg::new("root")
-                .required(true)
-                .value_name("URL")
-                .about("the url at which to start the search"),
-        ).get_matches();
+            Arg::new("data-only")
+                .long("data-only")
+                .short('o')
+                .takes_value(false)
+                .about("only print the extracted data, without the source url")
+                .help_heading(Some("Output"))
+        )
+        .arg(
+        Arg::new("json")
+            .long("json")
+            .short('j')
+            .takes_value(false)
+            .about("print the data as a json value")
+            .help_heading(Some("Output"))
+        )
+        .arg(
+            Arg::new("full")
+                .long("full")
+                .short('f')
+                .takes_value(false)
+                .about("print the url as a heading before the found data (default)")
+                .help_heading(Some("Output"))
+        )
+        .get_matches();
 
     // extract the values needed for traversal
     let max_depth: Option<usize> = if let Some(depth_s) = app.value_of("max-depth") {
@@ -102,15 +128,17 @@ fn main() {
         )));
     }
 
+    // extract data from site
     let patterns: Vec<&str> = patterns.iter().map(String::as_str).collect();
     let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
-
     let graph: Graph = Graph::new(root, &regexp, max_depth);
 
+    // output the extracted dta in the requested format
+    // todo: could make this cleaner with more tree-like output for last datum
     for (url, node) in graph.iter() {
         println!("{}", url.as_str());
         for datum in &node.data {
-            println!("{}", datum);
+            println!("├─ {}", datum);
         }
     }
 }
