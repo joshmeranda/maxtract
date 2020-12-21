@@ -13,9 +13,6 @@ use url::Url;
 
 use extract::{Graph, PatternType};
 
-// todo: better output
-//   json?
-//   flat &| mapped
 // todo: simple testing data
 fn main() {
     let app: ArgMatches = App::new(crate_name!())
@@ -71,15 +68,22 @@ fn main() {
                 .short('o')
                 .takes_value(false)
                 .about("only print the extracted data, without the source url")
-                .help_heading(Some("Output"))
+                .help_heading(Some("Output")),
         )
         .arg(
-        Arg::new("json")
-            .long("json")
-            .short('j')
-            .takes_value(false)
-            .about("print the data as a json value")
-            .help_heading(Some("Output"))
+            Arg::new("json")
+                .long("json")
+                .short('j')
+                .takes_value(false)
+                .about("print the data as json")
+                .help_heading(Some("Output")),
+        )
+        .arg(
+            Arg::new("pretty-json")
+                .long("pretty-json")
+                .takes_value(false)
+                .about("print the data as pretty json")
+                .help_heading(Some("Output")),
         )
         .arg(
             Arg::new("full")
@@ -87,12 +91,9 @@ fn main() {
                 .short('f')
                 .takes_value(false)
                 .about("print the url as a heading before the found data (default)")
-                .help_heading(Some("Output"))
+                .help_heading(Some("Output")),
         )
-        .group(
-            ArgGroup::new("output")
-                .args(&["data-only", "full", "json"])
-        )
+        .group(ArgGroup::new("output").args(&["data-only", "full", "json", "pretty-json"]))
         .get_matches();
 
     // extract the values needed for traversal
@@ -100,7 +101,10 @@ fn main() {
         if let Ok(depth) = usize::from_str(depth_s) {
             Some(depth)
         } else {
-            eprintln!("ERROR: Unable to parse depth as uint\nsee `{} --help` for more information.", crate_name!());
+            eprintln!(
+                "ERROR: Unable to parse depth as uint\nsee `{} --help` for more information.",
+                crate_name!()
+            );
             return;
         }
     } else {
@@ -144,8 +148,7 @@ fn main() {
                 println!("{}", datum);
             }
         }
-    }
-    else if app.is_present("json") {
+    } else if app.is_present("json") {
         let json: String = if let Ok(j) = serde_json::to_string(&graph) {
             j
         } else {
@@ -153,9 +156,15 @@ fn main() {
             return;
         };
         println!("{}", json);
-    }
-    else {
-        // todo: could make this cleaner with more tree-like output for last datum
+    } else if app.is_present("pretty-json") {
+        let json: String = if let Ok(j) = serde_json::to_string_pretty(&graph) {
+            j
+        } else {
+            eprintln!("ERROR: Could not generate json output.");
+            return;
+        };
+        println!("{}", json);
+    } else {
         for (url, node) in graph.iter() {
             println!("{}", url.as_str());
             for datum in &node.data {

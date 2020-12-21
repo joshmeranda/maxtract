@@ -3,21 +3,16 @@ use std::{
     collections::HashSet,
     hash::{Hash, Hasher},
     str,
-    string::String
+    string::String,
 };
 
 use curl::easy::{Easy2, Handler, WriteError};
 
 use regex::{Match, Regex};
 
-use select::{
-    document::Document,
-    node::Node as DomNode,
-    predicate::Name
-};
+use select::{document::Document, node::Node as DomNode, predicate::Name};
 
-use serde::{Serialize, Serializer};
-use serde::ser::{SerializeStruct, SerializeSeq};
+use serde::{ser::SerializeStruct, Serialize, Serializer};
 
 use url::{self, ParseError, ParseOptions, Url};
 
@@ -35,7 +30,7 @@ impl Handler for HtmlHandler {
 pub struct Node {
     pub url: Url,
     pub children: Vec<Url>,
-    pub data: HashSet<String>
+    pub data: HashSet<String>,
 }
 
 impl Node {
@@ -122,14 +117,21 @@ impl Node {
 }
 
 impl Serialize for Node {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         let mut node_ser = serializer.serialize_struct("Node", 3)?;
 
         node_ser.serialize_field("url", self.url.as_str())?;
+
         node_ser.serialize_field("data", &self.data)?;
 
-        let children_str: Vec<&str> = self.children.iter().map(|child| child.as_str()).collect::<Vec<&str>>();
+        let children_str: Vec<&str> = self
+            .children
+            .iter()
+            .map(|child| child.as_str())
+            .collect::<Vec<&str>>();
         node_ser.serialize_field("children", &children_str)?;
 
         node_ser.end()
@@ -142,7 +144,7 @@ impl Hash for Node {
     }
 }
 
-impl Eq for Node { }
+impl Eq for Node {}
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {

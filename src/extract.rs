@@ -1,15 +1,16 @@
 use std::{
     collections::{
         hash_map::{HashMap, Iter},
-        VecDeque},
+        VecDeque,
+    },
     str,
-    string::String
+    string::String,
 };
 
 use regex::Regex;
 
-use serde::{Serialize, Serializer};
 use serde::ser::SerializeMap;
+use serde::{Serialize, Serializer};
 
 use url::Url;
 
@@ -34,7 +35,7 @@ impl PatternType<'_> {
 
 /// A wrapper around a collection of [Node](node/struct.Node.html)s.
 pub struct Graph {
-    graph: HashMap<Url, Node>
+    graph: HashMap<Url, Node>,
 }
 
 impl Graph {
@@ -48,7 +49,11 @@ impl Graph {
         let mut target: Url = url;
 
         let mut depth: usize = 0;
-        let max_depth: usize = if let Some(max_depth) = max_depth { max_depth } else { usize::max_value() };
+        let max_depth: usize = if let Some(max_depth) = max_depth {
+            max_depth
+        } else {
+            usize::max_value()
+        };
 
         // the length of graph that will indicate a new depth in the graph
         let mut next_depth_len: usize = 1;
@@ -63,7 +68,7 @@ impl Graph {
                     .filter(|child| !graph.contains_key(*child))
                     // add new children to next_targets
                     .for_each(|child| {
-                        // todo: try and merge this with th eabove filter
+                        // todo: try and merge this with the above filter
                         if !next_targets.contains(child) {
                             next_targets.push_back(child.clone())
                         }
@@ -99,8 +104,10 @@ impl Graph {
 }
 
 impl Serialize for Graph {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         let mut state = serializer.serialize_map(Some(self.graph.len()))?;
 
         for (url, node) in &self.graph {
