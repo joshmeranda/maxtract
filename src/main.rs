@@ -89,6 +89,10 @@ fn main() {
                 .about("print the url as a heading before the found data (default)")
                 .help_heading(Some("Output"))
         )
+        .group(
+            ArgGroup::new("output")
+                .args(&["data-only", "full", "json"])
+        )
         .get_matches();
 
     // extract the values needed for traversal
@@ -134,11 +138,29 @@ fn main() {
     let graph: Graph = Graph::new(root, &regexp, max_depth);
 
     // output the extracted dta in the requested format
-    // todo: could make this cleaner with more tree-like output for last datum
-    for (url, node) in graph.iter() {
-        println!("{}", url.as_str());
-        for datum in &node.data {
-            println!("├─ {}", datum);
+    if app.is_present("data-only") {
+        for (_, node) in graph.iter() {
+            for datum in &node.data {
+                println!("{}", datum);
+            }
+        }
+    }
+    else if app.is_present("json") {
+        let json: String = if let Ok(j) = serde_json::to_string(&graph) {
+            j
+        } else {
+            eprintln!("ERROR: Could not generate json output.");
+            return;
+        };
+        println!("{}", json);
+    }
+    else {
+        // todo: could make this cleaner with more tree-like output for last datum
+        for (url, node) in graph.iter() {
+            println!("{}", url.as_str());
+            for datum in &node.data {
+                println!("├─ {}", datum);
+            }
         }
     }
 }

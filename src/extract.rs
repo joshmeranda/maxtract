@@ -8,6 +8,9 @@ use std::{
 
 use regex::Regex;
 
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeMap;
+
 use url::Url;
 
 use crate::node::Node;
@@ -92,5 +95,18 @@ impl Graph {
     /// Provide a simple iterator over the internal graph.
     pub fn iter(&self) -> Iter<Url, Node> {
         self.graph.iter()
+    }
+}
+
+impl Serialize for Graph {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
+        S: Serializer {
+        let mut state = serializer.serialize_map(Some(self.graph.len()))?;
+
+        for (url, node) in &self.graph {
+            state.serialize_entry(url.as_str(), &node)?;
+        }
+
+        state.end()
     }
 }

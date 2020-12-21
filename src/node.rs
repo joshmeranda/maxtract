@@ -16,6 +16,9 @@ use select::{
     predicate::Name
 };
 
+use serde::{Serialize, Serializer};
+use serde::ser::{SerializeStruct};
+
 use url::{self, ParseError, ParseOptions, Url};
 
 /// Simple handler for storing the received content.
@@ -118,13 +121,25 @@ impl Node {
     }
 }
 
+impl Serialize for Node {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
+        S: Serializer {
+        let mut node_ser = serializer.serialize_struct("Node", 3)?;
+
+        node_ser.serialize_field("url", self.url.as_str())?;
+        node_ser.serialize_field("data", &self.data)?;
+
+        node_ser.end()
+    }
+}
+
 impl Hash for Node {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.url.hash(state);
     }
 }
 
-impl Eq for Node {}
+impl Eq for Node { }
 
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
