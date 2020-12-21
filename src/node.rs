@@ -17,7 +17,7 @@ use select::{
 };
 
 use serde::{Serialize, Serializer};
-use serde::ser::{SerializeStruct};
+use serde::ser::{SerializeStruct, SerializeSeq};
 
 use url::{self, ParseError, ParseOptions, Url};
 
@@ -128,6 +128,9 @@ impl Serialize for Node {
 
         node_ser.serialize_field("url", self.url.as_str())?;
         node_ser.serialize_field("data", &self.data)?;
+
+        let children_str: Vec<&str> = self.children.iter().map(|child| child.as_str()).collect::<Vec<&str>>();
+        node_ser.serialize_field("children", &children_str)?;
 
         node_ser.end()
     }
