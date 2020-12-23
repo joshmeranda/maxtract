@@ -1,6 +1,6 @@
 use std::{
     cmp::Eq,
-    collections::HashSet,
+    collections::BTreeSet,
     hash::{Hash, Hasher},
     str,
     string::String,
@@ -30,7 +30,7 @@ impl Handler for HtmlHandler {
 pub struct Node {
     pub url: Url,
     pub children: Vec<Url>,
-    pub data: HashSet<String>,
+    pub data: BTreeSet<String>,
 }
 
 impl Node {
@@ -76,7 +76,7 @@ impl Node {
             })
             .collect();
 
-        let data: HashSet<String> = regexp
+        let data: BTreeSet<String> = regexp
             .find_iter(html.as_str())
             .map(|m: Match| String::from(m.as_str()))
             .collect();

@@ -1,6 +1,6 @@
 use std::{
     collections::{
-        hash_map::{HashMap, Iter},
+        btree_map::{BTreeMap, Iter},
         VecDeque,
     },
 };
@@ -16,7 +16,7 @@ use crate::node::Node;
 
 /// A wrapper around a collection of [Node](node/struct.Node.html)s.
 pub struct Graph {
-    graph: HashMap<Url, Node>,
+    graph: BTreeMap<Url, Node>,
 }
 
 impl Graph {
@@ -24,7 +24,7 @@ impl Graph {
     /// todo: perform several new nodes concurrently
     /// todo: implement verbose mode
     pub fn new(url: Url, regexp: &Regex, max_depth: Option<usize>) -> Graph {
-        let mut graph: HashMap<Url, Node> = HashMap::new();
+        let mut graph: BTreeMap<Url, Node> = BTreeMap::new();
 
         let mut next_targets: VecDeque<Url> = VecDeque::new();
         let mut target: Url = url;
