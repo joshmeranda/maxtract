@@ -1,21 +1,3 @@
-use std::{
-    collections::{
-        hash_map::{HashMap, Iter},
-        VecDeque,
-    },
-    str,
-    string::String,
-};
-
-use regex::Regex;
-
-use serde::ser::SerializeMap;
-use serde::{Serialize, Serializer};
-
-use url::Url;
-
-use crate::node::Node;
-
 pub enum PatternType<'a> {
     Phone,
     Email,
@@ -32,87 +14,68 @@ impl PatternType<'_> {
     }
 }
 
-/// A wrapper around a collection of [Node](node/struct.Node.html)s.
-pub struct Graph {
-    graph: HashMap<Url, Node>,
-}
+#[cfg(test)]
+mod tests {
+    use regex::{Match, Regex};
 
-impl Graph {
-    /// Constructs a graph of all [Url](../../url/struct.Url.html)s and the associated [Node](node/struct.Node.html).
-    /// todo: perform several new nodes concurrently
-    /// todo: implement verbose mode
-    pub fn new(url: Url, regexp: &Regex, max_depth: Option<usize>) -> Graph {
-        let mut graph: HashMap<Url, Node> = HashMap::new();
+    use super::PatternType;
 
-        let mut next_targets: VecDeque<Url> = VecDeque::new();
-        let mut target: Url = url;
+    #[test]
+    fn test_extract_phone() {
+        let html = "(000) 000-0000
+            (000)000-0000
+            000-000-0000
+            000 000 0000
+            000.000.0000
+            000/000.0000
 
-        let mut depth: usize = 0;
-        let max_depth: usize = if let Some(max_depth) = max_depth {
-            max_depth
+            0000000000
+            (00) 000-0000
+            000) 000-0000";
+
+        if let Ok(regexp) = Regex::new(PatternType::get_regexp(PatternType::Phone).as_str()) {
+            let actual: Vec<String> = regexp.find_iter(html)
+                .map(|m: Match| String::from(m.as_str()))
+                .collect();
+
+            let expected: Vec<String> = vec![
+                String::from("(000) 000-0000"),
+                String::from("(000)000-0000"),
+                String::from("000-000-0000"),
+                String::from("000 000 0000"),
+                String::from("000.000.0000"),
+                String::from("000/000.0000"),
+            ];
+
+            assert_eq!(actual, expected);
         } else {
-            usize::max_value()
-        };
-
-        // the length of graph that will indicate a new depth in the graph
-        let mut next_depth_len: usize = 1;
-
-        loop {
-            // search graph for node where `node.url == target`
-            if let Some(node) = Node::new(&target, regexp) {
-                // add node children to `next_targets`
-                node.children
-                    .iter()
-                    // filter children already in graph
-                    .filter(|child| !graph.contains_key(*child))
-                    // add new children to next_targets
-                    .for_each(|child| {
-                        // todo: try and merge this with the above filter
-                        if !next_targets.contains(child) {
-                            next_targets.push_back(child.clone())
-                        }
-                    });
-
-                graph.insert(node.url.clone(), node);
-            } else {
-                eprintln!("ERROR: could not create node for '{}'", target.as_str());
-            }
-
-            if next_depth_len == graph.len() {
-                depth += 1;
-                next_depth_len = graph.len() + next_targets.len();
-            }
-
-            if depth > max_depth {
-                break;
-            }
-
-            match next_targets.pop_front() {
-                Some(url) => target = url,
-                None => break,
-            }
+            panic!()
         }
-
-        Graph { graph }
     }
 
-    /// Provide a simple iterator over the internal graph.
-    pub fn iter(&self) -> Iter<Url, Node> {
-        self.graph.iter()
-    }
-}
+    #[test]
+    fn test_extract_email() {
+        let html = "first.last@domain.com
+            firstlast@domain.com
 
-impl Serialize for Graph {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_map(Some(self.graph.len()))?;
+            @domain.com
+            first.last@.com
+            first.lastdomain.com
+            first.last@domain";
 
-        for (url, node) in &self.graph {
-            state.serialize_entry(url.as_str(), &node)?;
+        if let Ok(regexp) = Regex::new(PatternType::get_regexp(PatternType::Email).as_str()) {
+            let actual: Vec<String> = regexp.find_iter(html)
+                .map(|m: Match| String::from(m.as_str()))
+                .collect();
+
+            let expected: Vec<String> = vec![
+                String::from("first.last@domain.com"),
+                String::from("firstlast@domain.com"),
+            ];
+
+            assert_eq!(actual, expected);
+        } else {
+            panic!()
         }
-
-        state.end()
     }
 }

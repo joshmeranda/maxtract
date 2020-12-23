@@ -1,5 +1,6 @@
 mod extract;
 mod node;
+mod graph;
 
 use std::str::FromStr;
 
@@ -11,7 +12,9 @@ use clap::{
 
 use url::Url;
 
-use extract::{Graph, PatternType};
+use extract::PatternType;
+
+use graph::Graph;
 
 // todo: simple testing data
 fn main() {
