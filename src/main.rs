@@ -2,7 +2,7 @@ mod extract;
 mod graph;
 mod node;
 
-use std::str::FromStr;
+use std::{str::FromStr, process::exit};
 
 use regex::Regex;
 
@@ -100,25 +100,22 @@ fn main() {
         .get_matches();
 
     // extract the values needed for traversal
-    let max_depth: Option<usize> = if let Some(depth_s) = app.value_of("max-depth") {
-        if let Ok(depth) = usize::from_str(depth_s) {
-            Some(depth)
-        } else {
-            eprintln!(
-                "ERROR: Unable to parse depth as uint\nsee `{} --help` for more information.",
-                crate_name!()
-            );
-            return;
+    let max_depth: Option<usize> = match app.value_of("max-depth") {
+        Some(depth_s) => match usize::from_str(depth_s) {
+            Ok(depth) => Some(depth),
+            _ => {
+                eprintln!("ERROR: unable to parse depth as uint");
+                exit(1);
+            }
         }
-    } else {
-        None
+        None => None
     };
 
     let root: Url = match Url::parse(app.value_of("root").unwrap()) {
         Ok(url) => url,
         Err(err) => {
             eprintln!("ERROR: {}", err.to_string());
-            return;
+            exit(1);
         }
     };
 
@@ -141,8 +138,20 @@ fn main() {
 
     // extract data from site
     let patterns: Vec<&str> = patterns.iter().map(String::as_str).collect();
-    let regexp: Regex = Regex::new(&patterns.join("|")).unwrap();
-    let graph: Graph = Graph::new(root, &regexp, max_depth);
+    let regexp: Regex = match Regex::new(&patterns.join("|")) {
+        Ok(r) => r,
+        _ => {
+            eprintln!("ERROR: invalid regex pattern");
+            exit(1);
+        }
+    };
+
+    let graph: Graph = match Graph::new(root, &regexp, max_depth) {
+        Some(g) => g,
+        None => {
+            exit(1);
+        }
+    };
 
     // output the extracted dta in the requested format
     if app.is_present("data-only") {

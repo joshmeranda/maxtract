@@ -1,6 +1,9 @@
+mod common;
+
 use std::process::Command;
 
 use assert_cmd::prelude::*;
+
 use predicates::prelude::*;
 
 #[test]
@@ -13,9 +16,10 @@ fn test_missing_all() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn test_missing_email() -> Result<(), Box<dyn std::error::Error>> {
+fn test_missing_pattern() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("maxtract")?;
-    cmd.arg("--phone");
+
+    cmd.arg(common::get_uri());
 
     cmd.assert().failure();
 
@@ -60,6 +64,29 @@ fn test_malformed_url() -> Result<(), Box<dyn std::error::Error>> {
     cmd.assert().failure().stderr(predicate::str::similar(
         "ERROR: relative URL without a base\n",
     ));
+
+    Ok(())
+}
+
+#[test]
+fn test_non_numeric_depth() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin("maxtract")?;
+
+    cmd.arg(common::get_uri()).arg("--phone").arg("--max-depth").arg("N");
+
+    cmd.assert().failure().stderr(predicate::str::similar("ERROR: unable to parse depth as uint\n"));
+
+    Ok(())
+}
+
+#[test]
+fn test_invalid_regex_pattern() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin("maxtract")?;
+
+    // pass unclosed parentheses as regex pattern
+    cmd.arg(common::get_uri()).arg("--regex").arg("(");
+
+    cmd.assert().failure().stderr(predicate::str::similar("ERROR: invalid regex pattern\n"));
 
     Ok(())
 }

@@ -21,7 +21,7 @@ impl Graph {
     /// Constructs a graph of all [Url](../../url/struct.Url.html)s and the associated [Node](node/struct.Node.html).
     /// todo: perform several new nodes concurrently
     /// todo: implement verbose mode
-    pub fn new(url: Url, regexp: &Regex, max_depth: Option<usize>) -> Graph {
+    pub fn new(url: Url, regexp: &Regex, max_depth: Option<usize>) -> Option<Graph> {
         let mut graph: BTreeMap<Url, Node> = BTreeMap::new();
 
         let mut next_targets: VecDeque<Url> = VecDeque::new();
@@ -56,6 +56,7 @@ impl Graph {
                 graph.insert(node.url.clone(), node);
             } else {
                 eprintln!("ERROR: could not create node for '{}'", target.as_str());
+                return None;
             }
 
             if next_depth_len == graph.len() {
@@ -73,7 +74,7 @@ impl Graph {
             }
         }
 
-        Graph { graph }
+        Some(Graph { graph })
     }
 
     /// Provide a simple iterator over the internal graph.
