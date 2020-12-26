@@ -1,6 +1,6 @@
 mod extract;
-mod node;
 mod graph;
+mod node;
 
 use std::str::FromStr;
 
@@ -117,7 +117,7 @@ fn main() {
     let root: Url = match Url::parse(app.value_of("root").unwrap()) {
         Ok(url) => url,
         Err(err) => {
-            eprintln!("{}", err.to_string());
+            eprintln!("ERROR: {}", err.to_string());
             return;
         }
     };

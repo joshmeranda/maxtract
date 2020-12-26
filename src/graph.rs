@@ -1,8 +1,6 @@
-use std::{
-    collections::{
-        btree_map::{BTreeMap, Iter},
-        VecDeque,
-    },
+use std::collections::{
+    btree_map::{BTreeMap, Iter},
+    VecDeque,
 };
 
 use regex::Regex;
@@ -86,8 +84,8 @@ impl Graph {
 
 impl Serialize for Graph {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let mut state = serializer.serialize_map(Some(self.graph.len()))?;
 
