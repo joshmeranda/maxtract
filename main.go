@@ -7,11 +7,6 @@ import (
 	"regexp"
 )
 
-var (
-	_, _ = regexp.Compile("([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})")
-	_, _ = regexp.Compile("\\(\\d{3}\\)\\s?\\d{3}[-.]\\d{4}|\\d{3}[-./\\s]\\d{3}[-.\\s]\\d{4}")
-)
-
 func main() {
 	parser := argparse.NewParser("maxtract", "A command line tool for extracting information from websites")
 
@@ -40,6 +35,25 @@ func main() {
 		Help: "print the data as nicely formatted json",
 	})
 
+	var regex *regexp.Regexp
+
+	_ = parser.String("p", "pattern", &argparse.Options{
+		Required: true,
+		Validate: func(args []string) (err error) {
+			switch pattern := args[0]; pattern {
+			case "phone":
+				regex, err = regexp.Compile("([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})")
+			case "email":
+				regex, err = regexp.Compile("\\(\\d{3}\\)\\s?\\d{3}[-.]\\d{4}|\\d{3}[-./\\s]\\d{3}[-.\\s]\\d{4}")
+			default:
+				regex, err = regexp.Compile(pattern)
+			}
+
+			return
+		},
+		Help: "the pattern to search for, can be one of phone, email, or a custom regex pattern",
+	})
+
 	url := parser.String("u", "url", &argparse.Options{
 		Required: true,
 		Help:     "the url at which to start the search",
@@ -53,5 +67,6 @@ func main() {
 		fmt.Printf("=== %t %t %t %t ===\n", *dataOnly, *full, *json, *prettyJson)
 		fmt.Printf("=== %d ===\n", *maxDepth)
 		fmt.Printf("=== %s ===\n", *url)
+		fmt.Printf("=== %s ===\n", regex.String())
 	}
 }
