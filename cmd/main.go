@@ -3,46 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/akamensky/argparse"
-	"github.com/gocolly/colly"
+	"github.com/gocolly/colly/v2"
+	"github.com/jmeranda/maxtract"
 	"net/url"
 	"os"
 	"regexp"
 )
-
-func collect(url *url.URL, maxDepth int) {
-	fmt.Println("=== 000", url.Hostname(), "===")
-
-	filterRegex := regexp.MustCompile(fmt.Sprintf(".*%s.*", url.Hostname()))
-
-	collector := colly.NewCollector(
-		colly.URLFilters(filterRegex),
-		colly.MaxDepth(maxDepth),
-		colly.Async(true))
-
-	collector.OnHTML("a[href]", func(element *colly.HTMLElement) {
-		link := element.Attr("href")
-
-		// todo: do some processing
-
-		err := collector.Visit(link)
-
-		if err != nil {
-			// do nothing...
-		}
-	})
-
-	collector.OnRequest(func(request *colly.Request) {
-		fmt.Printf("=== 001 '%s' ===\n", request.URL)
-	})
-
-	err := collector.Visit(url.String())
-
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	collector.Wait()
-}
 
 func main() {
 	parser := argparse.NewParser("maxtract", "A command line tool for extracting information from websites")
@@ -75,7 +41,7 @@ func main() {
 	})
 
 	var regex *regexp.Regexp
-	_ = parser.String("p", "pattern", &argparse.Options{
+	parser.String("p", "pattern", &argparse.Options{
 		Required: true,
 		Validate: func(args []string) (err error) {
 			switch pattern := args[0]; pattern {
@@ -105,6 +71,12 @@ func main() {
 		Help: "the url at which to start the search",
 	})
 
+	rawDomains := parser.StringList("D", "domain", &argparse.Options{})
+
+	allowAllDomains := parser.Flag("", "allow-all-domains", &argparse.Options{
+		Help: "allow maxtract to craw outside of domain of the initial url, if '--domains' is specified this flag is ignored",
+	})
+
 	err := parser.Parse(os.Args)
 
 	if err != nil {
@@ -112,15 +84,34 @@ func main() {
 		return
 	}
 
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else if true {
-	} else {
-		fmt.Printf("=== %t %t %t %t ===\n", *dataOnly, *full, *json, *prettyJson)
-		fmt.Printf("=== %d ===\n", *maxDepth)
-		fmt.Printf("=== %s ===\n", rootUrl.String())
-		fmt.Printf("=== %s ===\n", regex.String())
+	domains := *rawDomains
+
+	var options = []colly.CollectorOption{
+		colly.MaxDepth(*maxDepth),
+		colly.Async(true),
 	}
 
-	collect(rootUrl, *maxDepth)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	if len(domains) > 1 {
+		*allowAllDomains = false
+	}
+
+	if ! *allowAllDomains {
+		domains = append((domains)[:], rootUrl.Hostname())
+		options = append(options, colly.AllowedDomains(domains...))
+	}
+
+	collector := colly.NewCollector(
+		options...
+	)
+
+	maxtract.Collect(rootUrl, collector)
+
+	_ = dataOnly
+	_ = full
+	_ = json
+	_ = prettyJson
 }
