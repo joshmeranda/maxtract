@@ -46,9 +46,9 @@ func main() {
 		Validate: func(args []string) (err error) {
 			switch pattern := args[0]; pattern {
 			case "phone":
-				regex, err = regexp.Compile("([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})")
+				regex = regexp.MustCompile("([0-9a-zA-Z]([-.[a-zA-Z0-9_]]*[0-9a-zA-Z])*@([0-9a-zA-Z][-[a-zA-Z0-9_]]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})")
 			case "email":
-				regex, err = regexp.Compile("\\(\\d{3}\\)\\s?\\d{3}[-.]\\d{4}|\\d{3}[-./\\s]\\d{3}[-.\\s]\\d{4}")
+				regex = regexp.MustCompile("\\([0-9]{3}\\)[ \t\n\r\f\v]?[0-9]{3}[-.][0-9]{4}|[0-9]{3}[-./[ \t\n\r\f\v]][0-9]{3}[-.[ \t\n\r\f\v]][0-9]{4}")
 			default:
 				regex, err = regexp.Compile(pattern)
 			}
@@ -108,7 +108,15 @@ func main() {
 		options...
 	)
 
-	maxtract.Collect(rootUrl, collector)
+	nodes := maxtract.Collect(rootUrl, collector, regex)
+
+	fmt.Println(collector.String())
+	for _, node := range nodes {
+		fmt.Println(node.Url.String())
+		fmt.Println(node.Children)
+		fmt.Println(node.Data)
+		fmt.Println()
+	}
 
 	_ = dataOnly
 	_ = full
