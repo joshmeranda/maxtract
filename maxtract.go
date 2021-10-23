@@ -10,12 +10,17 @@ import (
 
 type MarshallingURL url.URL
 
+func (link MarshallingURL) MarshalJSON() ([]byte, error) {
+	return json.Marshal(link.String())
+}
+
 func (link MarshallingURL) String() string {
 	lu := url.URL(link)
 	return lu.String()
 }
 
-type collectionNode struct {
+// CollectionNode is a wrapper around a webpage and the child links and data it contains.
+type CollectionNode struct {
 	Url MarshallingURL
 
 	Children []MarshallingURL
@@ -23,23 +28,18 @@ type collectionNode struct {
 	Data []string
 }
 
-func (node *collectionNode) addChild(child url.URL) {
+func (node *CollectionNode) addChild(child url.URL) {
 	node.Children = append(node.Children, MarshallingURL(child))
 }
 
-func (link MarshallingURL) MarshalJSON() ([]byte, error) {
-	return json.Marshal(link.String())
-}
-
 // Collect takes a preconfigured colly Collector and regular expression to extract Data
-// todo: might be worthwhile to take a storage destination
-func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []*collectionNode {
-	nodes := make(map[url.URL]*collectionNode, 0)
+func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []*CollectionNode {
+	nodes := make(map[url.URL]*CollectionNode, 0)
 
 	collector.OnResponse(func(response *colly.Response) {
 		data := regex.FindAllString(string(response.Body), -1)
 
-		node := collectionNode{
+		node := CollectionNode{
 			Url:      MarshallingURL(*response.Request.URL),
 			Children: make([]MarshallingURL, 0),
 			Data:     data,
@@ -52,7 +52,7 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 		link := element.Attr("href")
 		requestUrl := element.Request.URL
 
-		if hasVisited, _ := collector.HasVisited(link); ! hasVisited {
+		if hasVisited, _ := collector.HasVisited(link); !hasVisited {
 			linkUrl, err := url.Parse(link)
 
 			if err != nil {
@@ -70,7 +70,7 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 
 	collector.Wait()
 
-	nodeList := make([]*collectionNode, 0, len(nodes))
+	nodeList := make([]*CollectionNode, 0, len(nodes))
 
 	for _, node := range nodes {
 		nodeList = append(nodeList, node)

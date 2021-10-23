@@ -28,16 +28,50 @@ func main() {
 		Default: 0,
 	})
 
-	dataOnly := parser.Flag("o", "data-only", &argparse.Options{
-		Help: "only print the extracted data, without the source url",
+	var dataOnly, full, asJson, prettyJson *bool
+
+	dataOnly = parser.Flag("o", "data-only", &argparse.Options{
+		Validate: func(args []string) error {
+			if *full || *asJson || *prettyJson {
+				return fmt.Errorf("[-o,--data-only] ony one of --data-only, --full, --json, and --pretty-json may be specified")
+			}
+
+			return nil
+		},
+		Help: "only print the extracted data, without the source url (default))",
 	})
-	full := parser.Flag("f", "full", &argparse.Options{
-		Help: "print the source url as a heading before the found data (default)",
+
+	full = parser.Flag("f", "full", &argparse.Options{
+		Validate: func(args []string) error {
+			if *dataOnly || *asJson || *prettyJson {
+				return fmt.Errorf("[-f,--full] ony one of --data-only, --full, --json, and --pretty-json may be specified")
+			}
+
+			return nil
+		},
+		Help: "print the source url as a heading before the found data",
 	})
-	asJson := parser.Flag("j", "as_json", &argparse.Options{
+
+	asJson = parser.Flag("j", "json", &argparse.Options{
+		Validate: func(args []string) error {
+			if *dataOnly || *full || *prettyJson {
+				return fmt.Errorf("[-j,--json] ony one of --data-only, --full, --json, and --pretty-json may be specified")
+			}
+
+			return nil
+		},
+
 		Help: "print the data as a single line of as_json",
 	})
-	prettyJson := parser.Flag("J", "pretty-as_json", &argparse.Options{
+
+	prettyJson = parser.Flag("J", "pretty-json", &argparse.Options{
+		Validate: func(args []string) error {
+			if *dataOnly || *full || *asJson {
+				return fmt.Errorf("[-J,--pretty-json] ony one of --data-only, --full, --json, and --pretty-json may be specified")
+			}
+
+			return nil
+		},
 		Help: "print the data as nicely formatted as_json",
 	})
 
@@ -80,6 +114,10 @@ func main() {
 
 	err := parser.Parse(os.Args)
 
+	if ! (*dataOnly || *full || *asJson || *prettyJson) {
+		*dataOnly = true
+	}
+
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -111,21 +149,37 @@ func main() {
 
 	nodes := maxtract.Collect(rootUrl, collector, regex)
 
-	fmt.Println(collector.String())
-	for _, node := range nodes {
-		fmt.Println(node.Url.String())
-		fmt.Println(node.Children)
-		fmt.Println(node.Data)
-		fmt.Println()
+	switch {
+	case *dataOnly:
+		// todo: create a set to avoid showing duplicates in the minimal data only output
+		for _, node := range nodes {
+			for _, datum := range node.Data {
+				fmt.Println(datum)
+			}
+		}
+	case *full:
+		for _, node := range nodes {
+			fmt.Println(node.Url.String())
+
+			for _, datum := range node.Data {
+				fmt.Println("├─", datum)
+			}
+		}
+	case *asJson:
+		out, err := json.Marshal(nodes)
+
+		if err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			fmt.Println(string(out))
+		}
+	case *prettyJson:
+		out, err := json.MarshalIndent(nodes, "  ", "  ")
+
+		if err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			fmt.Println(string(out))
+		}
 	}
-
-	//bytes, err := json.Marshal(nodes)
-	bytes, err := json.MarshalIndent(nodes, "  ", "    ")
-
-	fmt.Println(string(bytes))
-
-	_ = dataOnly
-	_ = full
-	_ = asJson
-	_ = prettyJson
 }
