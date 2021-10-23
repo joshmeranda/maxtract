@@ -1,22 +1,34 @@
 package maxtract
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"net/url"
 	"regexp"
 )
 
-type collectionNode struct {
-	Url url.URL
+type MarshallingURL url.URL
 
-	Children []url.URL
+func (link MarshallingURL) String() string {
+	lu := url.URL(link)
+	return lu.String()
+}
+
+type collectionNode struct {
+	Url MarshallingURL
+
+	Children []MarshallingURL
 
 	Data []string
 }
 
 func (node *collectionNode) addChild(child url.URL) {
-	node.Children = append(node.Children, child)
+	node.Children = append(node.Children, MarshallingURL(child))
+}
+
+func (link MarshallingURL) MarshalJSON() ([]byte, error) {
+	return json.Marshal(link.String())
 }
 
 // Collect takes a preconfigured colly Collector and regular expression to extract Data
@@ -28,8 +40,8 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 		data := regex.FindAllString(string(response.Body), -1)
 
 		node := collectionNode{
-			Url:      *response.Request.URL,
-			Children: make([]url.URL, 0),
+			Url:      MarshallingURL(*response.Request.URL),
+			Children: make([]MarshallingURL, 0),
 			Data:     data,
 		}
 

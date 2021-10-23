@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/akamensky/argparse"
 	"github.com/gocolly/colly/v2"
@@ -33,11 +34,11 @@ func main() {
 	full := parser.Flag("f", "full", &argparse.Options{
 		Help: "print the source url as a heading before the found data (default)",
 	})
-	json := parser.Flag("j", "json", &argparse.Options{
-		Help: "print the data as a single line of json",
+	asJson := parser.Flag("j", "as_json", &argparse.Options{
+		Help: "print the data as a single line of as_json",
 	})
-	prettyJson := parser.Flag("J", "pretty-json", &argparse.Options{
-		Help: "print the data as nicely formatted json",
+	prettyJson := parser.Flag("J", "pretty-as_json", &argparse.Options{
+		Help: "print the data as nicely formatted as_json",
 	})
 
 	var regex *regexp.Regexp
@@ -118,8 +119,13 @@ func main() {
 		fmt.Println()
 	}
 
+	//bytes, err := json.Marshal(nodes)
+	bytes, err := json.MarshalIndent(nodes, "  ", "    ")
+
+	fmt.Println(string(bytes))
+
 	_ = dataOnly
 	_ = full
-	_ = json
+	_ = asJson
 	_ = prettyJson
 }
