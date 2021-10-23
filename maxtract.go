@@ -32,8 +32,25 @@ func (node *CollectionNode) addChild(child url.URL) {
 	node.Children = append(node.Children, MarshallingURL(child))
 }
 
+func canonicalizeRelativeUrl(scheme string, domain string, path string) (*url.URL, error) {
+	var stringUrl string
+
+	fmt.Printf("=== '%s' ===\n", path)
+
+	if len(path) == 0 {
+		stringUrl = fmt.Sprintf("%s://%s", scheme, domain)
+	} else if path[0] == '/' {
+		stringUrl = fmt.Sprintf("%s://%s%s", scheme, domain, path)
+	} else {
+		stringUrl = fmt.Sprintf("%s://%s/%s", scheme, domain, path)
+	}
+
+	return url.Parse(stringUrl)
+}
+
 // Collect takes a preconfigured colly Collector and regular expression to extract Data
 func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []*CollectionNode {
+	// todo: add mutex lock to prevent concurrent read and write
 	nodes := make(map[url.URL]*CollectionNode, 0)
 
 	collector.OnResponse(func(response *colly.Response) {
@@ -50,19 +67,25 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 
 	collector.OnHTML("a[href]", func(element *colly.HTMLElement) {
 		link := element.Attr("href")
+
 		requestUrl := element.Request.URL
 
+		linkUrl, err := url.Parse(link)
+
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		if ! linkUrl.IsAbs() {
+			linkUrl, _ = canonicalizeRelativeUrl(requestUrl.Scheme, requestUrl.Hostname(), link)
+		}
+
 		if hasVisited, _ := collector.HasVisited(link); !hasVisited {
-			linkUrl, err := url.Parse(link)
-
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-
 			node := nodes[*requestUrl]
 			node.addChild(*linkUrl)
 
-			_ = collector.Visit(link)
+			err = collector.Visit(linkUrl.String())
 		}
 	})
 
