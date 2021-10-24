@@ -35,7 +35,7 @@ func (node *CollectionNode) addChild(child url.URL) {
 func canonicalizeRelativeUrl(scheme string, domain string, path string) (*url.URL, error) {
 	var stringUrl string
 
-	fmt.Printf("=== '%s' ===\n", path)
+	//fmt.Printf("=== '%s' ===\n", path)
 
 	if len(path) == 0 {
 		stringUrl = fmt.Sprintf("%s://%s", scheme, domain)
@@ -53,6 +53,8 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 	// todo: add mutex lock to prevent concurrent read and write
 	nodes := make(map[url.URL]*CollectionNode, 0)
 
+	writeLock := make(chan bool, 1)
+
 	collector.OnResponse(func(response *colly.Response) {
 		data := regex.FindAllString(string(response.Body), -1)
 
@@ -62,7 +64,9 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 			Data:     data,
 		}
 
+		writeLock <- true
 		nodes[*response.Request.URL] = &node
+		<- writeLock
 	})
 
 	collector.OnHTML("a[href]", func(element *colly.HTMLElement) {
@@ -82,8 +86,11 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 		}
 
 		if hasVisited, _ := collector.HasVisited(link); !hasVisited {
+			writeLock <- true
 			node := nodes[*requestUrl]
+
 			node.addChild(*linkUrl)
+			<-writeLock
 
 			err = collector.Visit(linkUrl.String())
 		}
