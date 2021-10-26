@@ -53,31 +53,29 @@ func Collect(root *url.URL, collector *colly.Collector, regex *regexp.Regexp) []
 	})
 
 	collector.OnHTML("a[href]", func(element *colly.HTMLElement) {
-		link := element.Attr("href")
+		rawLink := element.Attr("href")
 
-		requestUrl := element.Request.URL
-
-		linkUrl, err := url.Parse(link)
+		parentUrl := element.Request.URL
+		linkUrl, err := url.Parse(rawLink)
 
 		if err != nil {
-			fmt.Println("Error:", err)
+			fmt.Println("Error :", linkUrl, ":" , err)
 			return
 		}
 
 		if ! linkUrl.IsAbs() {
-			*linkUrl = *requestUrl
-			linkUrl.Path = link
-			linkUrl.Fragment = ""
+			*linkUrl = *parentUrl
+			linkUrl.Path = rawLink
 		}
 
-		if hasVisited, _ := collector.HasVisited(link); !hasVisited {
+		if hasVisited, _ := collector.HasVisited(linkUrl.String()); !hasVisited {
 			writeLock <- true
-			node := nodes[*requestUrl]
+			node := nodes[*parentUrl]
 
 			node.addChild(*linkUrl)
 			<-writeLock
 
-			err = collector.Visit(linkUrl.String())
+			_ = collector.Visit(linkUrl.String())
 		}
 	})
 
